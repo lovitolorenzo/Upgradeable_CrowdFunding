@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
 import {TokenMinter} from "./TokenMinter.sol";
@@ -9,14 +11,15 @@ contract CrowdFunding {
         string name;
         uint date;
         address owner;
-        uint fundingGoal;
-        mapping(address => uint) contributions;
+        uint totalFunded; /// @notice expressed in Ethereum
+        uint fundingGoal; /// @notice expressed in Ethereum
+        mapping(address => uint) crowdFundingTokens;
     }
 
     /// @notice map where key is fundCrowd owner
     mapping(address => singleCrowd) AllCrowds;
 
-    constructor() public {
+    constructor() {
         /// @notice Initialize TokenMinter.sol
         CrowdTokenMinter = new TokenMinter();
     }
@@ -41,14 +44,51 @@ contract CrowdFunding {
     function funding(address _crowdOwner) public payable {
         require(msg.value > 0, "No funds sent");
         require(
-            AllCrowds[_crowdOwner].owner != address(0),
-            "Crowd Fund inexistent"
+            AllCrowds[_crowdOwner].owner == _crowdOwner,
+            "Crowd Funding inexistent"
         );
 
-        uint convertToCFT = msg.value * 1000;
-        CrowdTokenMinter.mint(msg.sender, convertToCFT);
+        uint convertedToCFT = msg.value * 1000;
+        CrowdTokenMinter.mint(msg.sender, convertedToCFT);
+
+        /// Emit balanceOf(msg.sender) in tokens and emit also the Ethereums funded
+        /// Emit totalSupply of tokens
 
         /// @dev add funder and him/her funds amount to crowd struct
-        AllCrowds[_crowdOwner].contributions[msg.sender] = convertToCFT;
+        AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender] = convertedToCFT;
+        AllCrowds[_crowdOwner].totalFunded += msg.value;
+        /// Emit totalFunded
+    }
+
+    function refunding(address _crowdOwner) public {
+        require(
+            AllCrowds[_crowdOwner].date > block.timestamp &&
+                AllCrowds[_crowdOwner].fundingGoal >
+                AllCrowds[_crowdOwner].totalFunded,
+            "Crowd Funding still going"
+        );
+        require(
+            AllCrowds[_crowdOwner].owner == _crowdOwner,
+            "Crowd Funding inexistent"
+        );
+        require(
+            AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender] > 0,
+            "No Funds at this address"
+        );
+
+        /// @notice convert funds from crowdFundingTokens to Ethereum
+        uint funderEthFunds = AllCrowds[_crowdOwner].crowdFundingTokens[
+            msg.sender
+        ] / 1000;
+
+        /// @dev wipe out the amount in the storage struct AllCrowds before transferring for security reasons
+        AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender] = 0;
+        /// @dev burn withdrawal tokens
+        CrowdTokenMinter.burn(
+            msg.sender,
+            AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender]
+        );
+        /// @dev now we can send the amount to the address
+        payable(msg.sender).transfer(funderEthFunds);
     }
 }

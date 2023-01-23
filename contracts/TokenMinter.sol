@@ -21,6 +21,13 @@ contract TokenMinter is ERC20, AccessControl, ERC20Permit, ERC20Votes {
         _mint(to, amount);
     }
 
+    function burn(address account, uint256 amount)
+        public
+        onlyRole(MINTER_ROLE)
+    {
+        _burn(account, amount);
+    }
+
     // The following functions are overrid required by Solidity.
 
     function _afterTokenTransfer(
