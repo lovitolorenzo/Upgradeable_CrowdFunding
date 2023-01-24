@@ -3,8 +3,14 @@
 pragma solidity ^0.8.0;
 
 import {TokenMinter} from "./TokenMinter.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract CrowdFunding {
+/// TODO: add modifiers
+/// TODO: add events
+/// TODO: Demonstrates ability to choose appropriate memory types for parameters, variables etc.
+/// TODO: Project demonstrates understanding of common EVM developer tooling, e.g. truffle, ganache, hardhat, etc.
+
+contract CrowdFunding is Initializable {
     TokenMinter public CrowdTokenMinter;
 
     struct singleCrowd {
@@ -19,7 +25,7 @@ contract CrowdFunding {
     /// @notice map where key is fundCrowd owner
     mapping(address => singleCrowd) AllCrowds;
 
-    constructor() {
+    function initialize() external {
         /// @notice Initialize TokenMinter.sol
         CrowdTokenMinter = new TokenMinter();
     }
