@@ -6,7 +6,6 @@ import {TokenMinter} from "./TokenMinter.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {AddressUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
-/// TODO: add modifiers
 /// TODO: add events
 /// TODO: Demonstrates ability to choose appropriate memory types for parameters, variables etc.
 /// TODO: Project demonstrates understanding of common EVM developer tooling, e.g. truffle, ganache, hardhat, etc.
@@ -31,6 +30,23 @@ contract CrowdFunding is Initializable {
         CrowdTokenMinter = new TokenMinter();
     }
 
+    modifier noContracts(address _crowdOwner) {
+        require(
+            !AddressUpgradeable.isContract(_crowdOwner) ||
+                !AddressUpgradeable.isContract(msg.sender),
+            "CrowdOwner or sender is a contract"
+        );
+        _;
+    }
+
+    modifier FundExistence(address _crowdOwner) {
+        require(
+            AllCrowds[_crowdOwner].owner == _crowdOwner,
+            "Crowd Funding inexistent"
+        );
+        _;
+    }
+
     function startCrowdfunding(
         string memory _name,
         uint _date,
@@ -51,17 +67,13 @@ contract CrowdFunding is Initializable {
         ) = (_name, msg.sender, _date, _fundingGoal);
     }
 
-    function funding(address _crowdOwner) public payable {
+    function funding(address _crowdOwner)
+        public
+        payable
+        noContracts(_crowdOwner)
+        FundExistence(_crowdOwner)
+    {
         require(msg.value > 0, "No funds sent");
-        require(
-            !AddressUpgradeable.isContract(_crowdOwner) ||
-                !AddressUpgradeable.isContract(msg.sender),
-            "CrowdOwner or sender is a contract"
-        );
-        require(
-            AllCrowds[_crowdOwner].owner == _crowdOwner,
-            "Crowd Funding inexistent"
-        );
 
         uint convertedToCFT = msg.value * 1000;
         CrowdTokenMinter.mint(msg.sender, convertedToCFT);
@@ -75,22 +87,18 @@ contract CrowdFunding is Initializable {
         /// Emit totalFunded
     }
 
-    function refunding(address _crowdOwner) public {
-        require(
-            !AddressUpgradeable.isContract(_crowdOwner) ||
-                !AddressUpgradeable.isContract(msg.sender),
-            "CrowdOwner or sender is a contract"
-        );
+    function refunding(address _crowdOwner)
+        public
+        noContracts(_crowdOwner)
+        FundExistence(_crowdOwner)
+    {
         require(
             AllCrowds[_crowdOwner].date > block.timestamp &&
                 AllCrowds[_crowdOwner].fundingGoal >
                 AllCrowds[_crowdOwner].totalFunded,
             "Crowd Funding still going"
         );
-        require(
-            AllCrowds[_crowdOwner].owner == _crowdOwner,
-            "Crowd Funding inexistent"
-        );
+
         require(
             AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender] > 0,
             "No Funds at this address"
