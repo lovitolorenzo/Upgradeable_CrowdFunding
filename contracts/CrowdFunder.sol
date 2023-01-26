@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import {TokenMinter} from "./TokenMinter.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {AddressUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 /// TODO: add modifiers
 /// TODO: add events
@@ -35,10 +36,12 @@ contract CrowdFunding is Initializable {
         uint _date,
         uint256 _fundingGoal
     ) public {
-        require(!isContract(msg.sender), "Sender is a contract");
+        require(
+            !AddressUpgradeable.isContract(msg.sender),
+            "Sender is a contract"
+        );
         require(_date > 0, "No end date");
         require(_fundingGoal > 0, "No funding amount goal");
-
         /// @notice fulfill allCrowds with a new crowdfunding
         (
             AllCrowds[msg.sender].name,
@@ -51,7 +54,8 @@ contract CrowdFunding is Initializable {
     function funding(address _crowdOwner) public payable {
         require(msg.value > 0, "No funds sent");
         require(
-            !isContract(_crowdOwner) || !isContract(msg.sender),
+            !AddressUpgradeable.isContract(_crowdOwner) ||
+                !AddressUpgradeable.isContract(msg.sender),
             "CrowdOwner or sender is a contract"
         );
         require(
@@ -73,7 +77,8 @@ contract CrowdFunding is Initializable {
 
     function refunding(address _crowdOwner) public {
         require(
-            !isContract(_crowdOwner) || !isContract(msg.sender),
+            !AddressUpgradeable.isContract(_crowdOwner) ||
+                !AddressUpgradeable.isContract(msg.sender),
             "CrowdOwner or sender is a contract"
         );
         require(
