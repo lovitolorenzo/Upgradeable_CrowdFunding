@@ -5,12 +5,15 @@ pragma solidity ^0.8.0;
 import {TokenMinter} from "./TokenMinter.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {AddressUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 /// TODO: add events
 /// TODO: Demonstrates ability to choose appropriate memory types for parameters, variables etc.
 /// TODO: Project demonstrates understanding of common EVM developer tooling, e.g. truffle, ganache, hardhat, etc.
 
 contract CrowdFunding is Initializable {
+    using SafeMathUpgradeable for uint256;
+
     TokenMinter public CrowdTokenMinter;
 
     struct singleCrowd {
@@ -75,7 +78,7 @@ contract CrowdFunding is Initializable {
     {
         require(msg.value > 0, "No funds sent");
 
-        uint convertedToCFT = msg.value * 1000;
+        uint convertedToCFT = SafeMathUpgradeable.mul(msg.value, 1000);
         CrowdTokenMinter.mint(msg.sender, convertedToCFT);
 
         /// Emit balanceOf(msg.sender) in tokens and emit also the Ethereums funded
@@ -83,7 +86,10 @@ contract CrowdFunding is Initializable {
 
         /// @dev add funder and him/her funds amount to crowd struct
         AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender] = convertedToCFT;
-        AllCrowds[_crowdOwner].totalFunded += msg.value;
+        AllCrowds[_crowdOwner].totalFunded = SafeMathUpgradeable.add(
+            AllCrowds[_crowdOwner].totalFunded,
+            msg.value
+        );
         /// Emit totalFunded
     }
 
@@ -105,9 +111,10 @@ contract CrowdFunding is Initializable {
         );
 
         /// @notice convert funds from crowdFundingTokens to Ethereum
-        uint funderEthFunds = AllCrowds[_crowdOwner].crowdFundingTokens[
-            msg.sender
-        ] / 1000;
+        uint funderEthFunds = SafeMathUpgradeable.div(
+            AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender],
+            1000
+        );
 
         /// @dev wipe out the amount in the storage struct AllCrowds before transferring for security reasons
         AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender] = 0;
