@@ -7,12 +7,31 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {AddressUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
-/// TODO: add events
 /// TODO: Demonstrates ability to choose appropriate memory types for parameters, variables etc.
 /// TODO: Project demonstrates understanding of common EVM developer tooling, e.g. truffle, ganache, hardhat, etc.
 
 contract CrowdFunding is Initializable {
     using SafeMathUpgradeable for uint256;
+
+    event StartCrowdfunding(
+        address indexed _crowdOwner,
+        string _name,
+        uint _date,
+        uint _fundingGoal
+    );
+    event Funded(
+        address indexed _crowdOwner,
+        address indexed _funder,
+        uint _tokens,
+        uint _eth
+    );
+    event Refunded(
+        address indexed _crowdOwner,
+        address indexed _funder,
+        uint _tokens,
+        uint _eth
+    );
+    event Supply(address indexed _crowdOwner, uint _tokens, uint _totalSupply);
 
     TokenMinter public CrowdTokenMinter;
 
@@ -68,6 +87,12 @@ contract CrowdFunding is Initializable {
             AllCrowds[msg.sender].date,
             AllCrowds[msg.sender].fundingGoal
         ) = (_name, msg.sender, _date, _fundingGoal);
+        emit StartCrowdfunding(
+            AllCrowds[msg.sender].owner,
+            AllCrowds[msg.sender].name,
+            AllCrowds[msg.sender].date,
+            AllCrowds[msg.sender].fundingGoal
+        );
     }
 
     function funding(address _crowdOwner)
@@ -80,6 +105,13 @@ contract CrowdFunding is Initializable {
 
         uint convertedToCFT = SafeMathUpgradeable.mul(msg.value, 1000);
         CrowdTokenMinter.mint(msg.sender, convertedToCFT);
+        uint totalSupply = CrowdTokenMinter.totalSupply();
+
+        emit Supply(
+            AllCrowds[_crowdOwner].owner,
+            AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender],
+            totalSupply
+        );
 
         /// Emit balanceOf(msg.sender) in tokens and emit also the Ethereums funded
         /// Emit totalSupply of tokens
@@ -90,7 +122,12 @@ contract CrowdFunding is Initializable {
             AllCrowds[_crowdOwner].totalFunded,
             msg.value
         );
-        /// Emit totalFunded
+        emit Funded(
+            AllCrowds[msg.sender].owner,
+            msg.sender,
+            AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender],
+            msg.value
+        );
     }
 
     function refunding(address _crowdOwner)
@@ -125,5 +162,11 @@ contract CrowdFunding is Initializable {
         );
         /// @dev now we can send the amount to the address
         payable(msg.sender).transfer(funderEthFunds);
+        emit Refunded(
+            AllCrowds[_crowdOwner].owner,
+            msg.sender,
+            AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender],
+            funderEthFunds
+        );
     }
 }
