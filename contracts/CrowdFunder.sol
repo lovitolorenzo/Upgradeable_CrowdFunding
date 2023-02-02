@@ -13,6 +13,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 contract CrowdFunding is Initializable {
     using SafeMathUpgradeable for uint256;
 
+    event checkMinterContract(string tokenName);
     event StartCrowdfunding(
         address indexed _crowdOwner,
         string _name,
@@ -45,11 +46,13 @@ contract CrowdFunding is Initializable {
     }
 
     /// @notice map where key is fundCrowd owner
-    mapping(address => singleCrowd) AllCrowds;
+    mapping(address => singleCrowd) public AllCrowds;
 
     function initialize() external {
         /// @notice Initialize TokenMinter.sol
         CrowdTokenMinter = new TokenMinter();
+        CrowdTokenMinter.initialize();
+        emit checkMinterContract(CrowdTokenMinter.name());
     }
 
     modifier noContracts(address _crowdOwner) {
@@ -104,7 +107,7 @@ contract CrowdFunding is Initializable {
         require(msg.value > 0, "No funds sent");
 
         uint convertedToCFT = SafeMathUpgradeable.mul(msg.value, 1000);
-        CrowdTokenMinter.mint(msg.sender, convertedToCFT);
+        CrowdTokenMinter.mint(msg.sender, convertedToCFT); /// Error calling the other contract
         uint totalSupply = CrowdTokenMinter.totalSupply();
 
         emit Supply(
@@ -112,9 +115,6 @@ contract CrowdFunding is Initializable {
             AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender],
             totalSupply
         );
-
-        /// Emit balanceOf(msg.sender) in tokens and emit also the Ethereums funded
-        /// Emit totalSupply of tokens
 
         /// @dev add funder and him/her funds amount to crowd struct
         AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender] = convertedToCFT;
@@ -136,8 +136,8 @@ contract CrowdFunding is Initializable {
         FundExistence(_crowdOwner)
     {
         require(
-            AllCrowds[_crowdOwner].date > block.timestamp &&
-                AllCrowds[_crowdOwner].fundingGoal >
+            AllCrowds[_crowdOwner].date > block.timestamp ||
+                AllCrowds[_crowdOwner].fundingGoal <
                 AllCrowds[_crowdOwner].totalFunded,
             "Crowd Funding still going"
         );

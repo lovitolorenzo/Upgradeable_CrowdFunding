@@ -1,26 +1,51 @@
 import { ethers } from "hardhat";
 
-// Define an async function to deploy the contract
 async function main() {
-  // Get wallets from EVM
-  const [deployer, acc1, acc2] = await ethers.getSigners();
+  // Get current block timestamp from EVM
+  let currentBlock = await ethers.provider.getBlock("latest");
+  let currentBlockTimestamp = currentBlock.timestamp;
 
   // Deploy the contract using EVM
-  const myTokenContractFactory = await ethers.getContractFactory("MyToken");
-  const myTokenContract = await myTokenContractFactory.deploy();
+  const CrowdFundingContractFactory = await ethers.getContractFactory(
+    "CrowdFunding"
+  );
+  const CrowdFundingContract = await CrowdFundingContractFactory.deploy();
 
   // Wait for the deployment to be confirmed
-  await myTokenContract.deployed();
+  const deployedCrowdFundingContract = await CrowdFundingContract.deployed();
+
+  // We need to initialize it due to the fact it is upgradeable
+  const initializedCrowdFundingContract =
+    await deployedCrowdFundingContract.initialize();
+
+  await initializedCrowdFundingContract.wait();
+
+  // Get EVM's funded wallets
+  const [deployer, acc1, acc2] = await ethers.getSigners();
 
   // Start the crowdfund
-  await myTokenContract.startCrowdfunding(
+  const startCrowd = await CrowdFundingContract.connect(
+    deployer
+  ).startCrowdfunding(
     "Project X",
-    1602217600,
+    currentBlockTimestamp + 100,
     ethers.utils.parseEther("1000")
   );
 
+  const balanceBeforeFunding = await acc1.getBalance();
+  console.log(
+    `Starting Funder balance: ${ethers.utils.formatEther(balanceBeforeFunding)}`
+  );
+
   // Fund the crowdfund
-  await myTokenContract.funding({ value: ethers.utils.parseEther("10") });
+  await CrowdFundingContract.connect(acc1).funding(deployer.address, {
+    value: ethers.utils.parseEther("10"),
+  });
+
+  const balanceAfterFunding = await acc1.getBalance();
+  console.log(
+    `Starting Funder balance: ${ethers.utils.formatEther(balanceAfterFunding)}`
+  );
 
   // End the crowdfund
   // Add code to end the crowdfund here
