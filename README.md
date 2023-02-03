@@ -21,8 +21,8 @@ The contract also emits events such as StartCrowdfunding, FundingSuccessful, Ref
 
 Clone the repository and navigate to the project directory:
 
-`git clone https://github.com/[username]/CrowdFunding.git
-cd CrowdFunding`
+`git clone https://github.com/[username]/CrowdFunding.git`
+`cd CrowdFunding`
 
 Install the required dependencies:
 `yarn add`
