@@ -130,6 +130,7 @@ async function waitForTimestamp(timestamp: number) {
     latest != currentTimestamp &&
       console.log(`Current timestamp: ${currentTimestamp}`);
 
+    // Update the latest timestamp with the new block's timestamp
     latest = currentTimestamp;
   }
 

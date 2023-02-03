@@ -20,19 +20,23 @@ contract CrowdFunding is Initializable {
         uint _date,
         uint _fundingGoal
     );
-    event Funded(
+    event FundingSuccessful(
         address indexed _crowdOwner,
         address indexed _funder,
         uint _tokens,
         uint _eth
     );
-    event Refunded(
+    event RefundingSuccessful(
         address indexed _crowdOwner,
         address indexed _funder,
         uint _tokens,
         uint _eth
     );
-    event Supply(address indexed _crowdOwner, uint _tokens, uint _totalSupply);
+    event TotalSupplyOfCrowdToken(
+        address indexed _crowdOwner,
+        uint _tokens,
+        uint _totalSupply
+    );
 
     TokenMinter public CrowdTokenMinter;
 
@@ -110,7 +114,7 @@ contract CrowdFunding is Initializable {
         CrowdTokenMinter.mint(msg.sender, convertedToCFT); /// Error calling the other contract
         uint totalSupply = CrowdTokenMinter.totalSupply();
 
-        emit Supply(
+        emit TotalSupplyOfCrowdToken(
             AllCrowds[_crowdOwner].owner,
             AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender],
             totalSupply
@@ -122,7 +126,7 @@ contract CrowdFunding is Initializable {
             AllCrowds[_crowdOwner].totalFunded,
             msg.value
         );
-        emit Funded(
+        emit FundingSuccessful(
             AllCrowds[msg.sender].owner,
             msg.sender,
             AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender],
@@ -136,7 +140,7 @@ contract CrowdFunding is Initializable {
         FundExistence(_crowdOwner)
     {
         require(
-            AllCrowds[_crowdOwner].date > block.timestamp ||
+            AllCrowds[_crowdOwner].date < block.timestamp ||
                 AllCrowds[_crowdOwner].fundingGoal <
                 AllCrowds[_crowdOwner].totalFunded,
             "Crowd Funding still going"
@@ -162,7 +166,7 @@ contract CrowdFunding is Initializable {
         );
         /// @dev now we can send the amount to the address
         payable(msg.sender).transfer(funderEthFunds);
-        emit Refunded(
+        emit RefundingSuccessful(
             AllCrowds[_crowdOwner].owner,
             msg.sender,
             AllCrowds[_crowdOwner].crowdFundingTokens[msg.sender],
