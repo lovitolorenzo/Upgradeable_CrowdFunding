@@ -1,6 +1,6 @@
 # CrowdFunding Contract
 
-This project is a decentralized crowd funding smart contract implemented on the Ethereum blockchain. It uses the OpenZeppelin library and demonstrates the ability to choose appropriate memory types for parameters, variables etc. and understanding of common EVM developer tooling such as hardhat, ganache, and truffle (optional).
+This project is a decentralized crowd funding smart contract implemented on the Ethereum blockchain. It uses the OpenZeppelin library and demonstrates the ability to choose appropriate memory types for parameters, variables etc. and understanding of common EVM developer tooling such as hardhat.
 
 ## Key Features
 
@@ -12,22 +12,21 @@ The contract also emits events such as StartCrowdfunding, FundingSuccessful, Ref
 
 ## Requirements
 
-Node.js
-Hardhat
-Ethers.js
-OpenZeppelin
+- Node.js
+- Hardhat
+- Ethers.js
+- OpenZeppelin
 
 ## Installation and Deployment
 
 Clone the repository and navigate to the project directory:
 
 `git clone https://github.com/[username]/CrowdFunding.git
-cd CrowdFunding``
+cd CrowdFunding`
 
 Install the required dependencies:
-`
-yarn add`
-Start the local blockchain using Ganache.
+`yarn add`
+
 Compile the contracts using Hardhat.
 
 `yarn hardhat compile`
