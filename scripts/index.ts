@@ -118,13 +118,20 @@ main()
 
 async function waitForTimestamp(timestamp: number) {
   let latest = (await ethers.provider.getBlock("latest")).timestamp;
+
   while (latest <= timestamp) {
-    const currentTimestamp = (await ethers.provider.getBlock("latest"))
-      .timestamp;
+    // Mine new block due to the fact we are in EVM
+    await ethers.provider.send("evm_mine", []);
+
+    const newBlock = await ethers.provider.getBlock("latest");
+
+    const currentTimestamp = newBlock.timestamp;
+
     latest != currentTimestamp &&
       console.log(`Current timestamp: ${currentTimestamp}`);
 
     latest = currentTimestamp;
   }
+
   if (latest > timestamp) return true;
 }
