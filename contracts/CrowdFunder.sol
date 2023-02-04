@@ -44,8 +44,8 @@ contract CrowdFunding is Initializable {
         string name;
         uint date;
         address owner;
-        uint totalFunded; /// @notice expressed in Ethereum
-        uint fundingGoal; /// @notice expressed in Ethereum
+        uint totalFunded; /// @notice expressed in Ethereum - current amount in the crowd
+        uint fundingGoal; /// @notice expressed in Ethereum - target in money to reach to end the crowd
         mapping(address => uint) crowdFundingTokens;
     }
 
@@ -140,9 +140,7 @@ contract CrowdFunding is Initializable {
         FundExistence(_crowdOwner)
     {
         require(
-            AllCrowds[_crowdOwner].date < block.timestamp ||
-                AllCrowds[_crowdOwner].fundingGoal <
-                AllCrowds[_crowdOwner].totalFunded,
+            AllCrowds[_crowdOwner].date < block.timestamp,
             "Crowd Funding still going"
         );
 
